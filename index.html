@@ -1,0 +1,2582 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صانع كتيبات وبوسترات تلوين الأطفال المخصصة - A4 Coloring Studio</title>
+    
+    <!-- Google Fonts: Cairo, Tajawal & Fredoka -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (v3 CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fdf4ff',
+                            100: '#fae8ff',
+                            500: '#d946ef',
+                            600: '#c026d3',
+                            700: '#a21caf',
+                        },
+                        amber: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Tajawal', 'Cairo', 'sans-serif'],
+                        cairo: ['Cairo', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Cropper.js CSS & JS CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+
+    <!-- jsPDF CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #0b1120;
+            color: #f8fafc;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+
+        /* Circular Cropper Box */
+        .cropper-view-box.circle-crop,
+        .cropper-face.circle-crop {
+            border-radius: 50% !important;
+            outline: none !important;
+        }
+        .cropper-view-box.circle-crop {
+            box-shadow: 0 0 0 2px #38bdf8;
+        }
+
+        /* Paper preview canvas grid background */
+        .canvas-container {
+            background-color: #0f172a;
+            background-image: radial-gradient(#334155 1.2px, transparent 1.2px);
+            background-size: 24px 24px;
+        }
+
+        /* Glow buttons */
+        .glow-btn {
+            box-shadow: 0 0 25px -4px rgba(217, 70, 239, 0.45);
+            transition: all 0.25s ease-in-out;
+        }
+        .glow-btn:hover {
+            box-shadow: 0 0 35px 2px rgba(217, 70, 239, 0.7);
+            transform: translateY(-2px);
+        }
+
+        /* Tabs and Accordions */
+        details summary::-webkit-details-marker {
+            display: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-fuchsia-500 selection:text-white">
+
+    <!-- Top Header -->
+    <header class="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30 px-4 py-3 sm:px-6">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-fuchsia-600 via-pink-500 to-amber-400 flex items-center justify-center text-2xl shadow-lg shadow-fuchsia-900/40">
+                    🎨
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-300 to-amber-300">
+                        استوديو كتيبات وبوسترات تلوين الأطفال المخصصة
+                    </h1>
+                    <p class="text-xs sm:text-sm text-slate-400">
+                        تخطيط ديناميكي مرن (صفحة كاملة أو 2، 4، 6، 8، 12، 16 كارت) + قوالب فاخرة وإمكانية رفع تصاميمك
+                    </p>
+                </div>
+            </div>
+
+            <!-- Header Quick Actions -->
+            <div class="flex items-center gap-2.5">
+                <button id="btnQuickExport" class="glow-btn bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm shadow-md transition cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>تحميل الكتيب (A4 PDF)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Layout -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Controls Sidebar (4.5 cols) -->
+        <aside class="lg:col-span-5 flex flex-col gap-4">
+
+            <!-- Layout Selector Card (المطلب الأول: دروب دون ليست لعدد الكروت والتقسيم) -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl backdrop-blur-sm space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-amber-400 text-lg">📐</span>
+                        <h2 class="font-bold text-slate-100 text-sm sm:text-base">تقسيم الصفحة وتخطيط الكروت (Layout)</h2>
+                    </div>
+                    <span class="text-[11px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold">تحكم فوري</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">
+                        اختر طريقة تقسيم ورقة الـ A4:
+                    </label>
+                    <select id="selectLayout" class="w-full bg-slate-950 border border-amber-500/40 rounded-xl px-3.5 py-2.5 text-slate-100 text-sm font-semibold focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 cursor-pointer transition">
+                        <option value="1">📄 صفحة كاملة (1 كارت A4 ضخم - بوستر تلوين جداري)</option>
+                        <option value="2">🎴 كارتين كبيرين A5 (صفحة مقسومة نصفين 2×1)</option>
+                        <option value="4">🃏 4 كروت كبيرة واضحة (2 صفوف × 2 أعمدة - مقاس ممتاز)</option>
+                        <option value="6">🗂️ 6 كروت متوسطة (2 صفوف × 3 أعمدة)</option>
+                        <option value="8">📦 8 كروت (2 صفوف × 4 أعمدة)</option>
+                        <option value="12" selected>🎨 12 كارت ميني بوكليت (3 صفوف × 4 أعمدة - الافتراضي)</option>
+                        <option value="16">🔖 16 كارت فلاش كاردز (4 صفوف × 4 أعمدة)</option>
+                    </select>
+                    <p id="layoutDetailsText" class="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
+                        <span>ℹ️</span> <span>النمط الحالي: 12 كارت (مقاس الكارت: 7.4 × 7.0 سم تقريباً مع خطوط قص منقطة).</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Child Info & Dedication -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl backdrop-blur-sm space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-fuchsia-400 text-lg">✏️</span>
+                        <h2 class="font-bold text-slate-100 text-sm sm:text-base">بيانات البطل والإهداء</h2>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">اسم الطفل (بطل القصة)</label>
+                        <input type="text" id="inputChildName" value="آدم" placeholder="مثال: آدم، لانا، فهد..." 
+                               class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-fuchsia-500 text-sm transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">من: (المُهدي)</label>
+                        <input type="text" id="inputFrom" value="ماما وبابا بكل حب" placeholder="مثال: بابا وماما" 
+                               class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 text-xs transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">إلى: (المُهدى إليه)</label>
+                        <input type="text" id="inputTo" value="بطلنا الرائع آدم" placeholder="مثال: بطلنا الرائع آدم" 
+                               class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 text-xs transition">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Face Photo & Line Art Engine (المطلب الثاني: خوارزمية خطوط تلوين فائقة النقاء) -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl backdrop-blur-sm space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-cyan-400 text-lg">📸</span>
+                        <h2 class="font-bold text-slate-100 text-sm sm:text-base">صورة الوجه وتحويلها لخطوط تلوين</h2>
+                    </div>
+                    <span class="text-[11px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded-full font-bold">فائق النقاء</span>
+                </div>
+
+                <!-- Upload and Quick Action -->
+                <div class="flex items-center gap-3">
+                    <input type="file" id="inputFile" accept="image/*" class="hidden">
+                    <label for="inputFile" class="flex-1 bg-gradient-to-r from-cyan-900/40 to-blue-900/40 hover:from-cyan-900/60 hover:to-blue-900/60 border border-cyan-700/60 rounded-xl p-2.5 text-center cursor-pointer transition flex items-center justify-center gap-2">
+                        <span class="text-base">📁</span>
+                        <span class="text-xs font-bold text-cyan-200">اختيار صورة طفل من الجهاز</span>
+                    </label>
+                    <button id="btnSamplePhoto" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-700 transition">
+                        وجه تجريبي
+                    </button>
+                </div>
+
+                <!-- Preview Thumbnail & Line Art Filter Controls -->
+                <div class="flex items-center gap-3.5 bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+                    <div class="relative shrink-0">
+                        <canvas id="facePreviewCanvas" width="80" height="80" class="w-16 h-16 rounded-full border-2 border-cyan-400 bg-white shadow-inner"></canvas>
+                        <span class="absolute -bottom-1 -right-1 bg-emerald-500 text-[9px] text-white px-1.5 py-0.2 rounded-full font-bold">جاهز</span>
+                    </div>
+
+                    <div class="flex-1 space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-200">نمط تحويل الخطوط:</span>
+                            <button id="btnOpenCropper" class="text-[11px] text-cyan-400 hover:underline">إعادة القص ✂</button>
+                        </div>
+                        <select id="selectFilterStyle" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 text-xs">
+                            <option value="cartoon" selected>🖍️ خطوط كرتونية نظيفة (Cartoon Outline)</option>
+                            <option value="manga">🖤 خطوط كوميكس ومانجا حادة (Comic Inking)</option>
+                            <option value="sketch">✏️ سكتش قلم رصاص فني (Pencil Sketch)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Fine Tuning Sliders Accordion -->
+                <details class="bg-slate-950/50 rounded-xl border border-slate-800/80 text-xs">
+                    <summary class="p-2.5 font-semibold text-slate-300 cursor-pointer select-none flex items-center justify-between">
+                        <span>⚙️ تعديل دقيق لحساسية الخطوط وسوادها</span>
+                        <span class="text-slate-500 text-[10px]">توسيع ▼</span>
+                    </summary>
+                    <div class="p-3 pt-0 space-y-2.5 border-t border-slate-800/60 mt-1">
+                        <div>
+                            <div class="flex justify-between text-[11px] text-slate-400 mb-0.5">
+                                <span>حساسية الحواف (Edge Sensitivity):</span>
+                                <span id="valThreshold" class="text-cyan-400 font-mono">24</span>
+                            </div>
+                            <input type="range" id="rangeThreshold" min="10" max="55" value="24" class="w-full accent-cyan-500">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[11px] text-slate-400 mb-0.5">
+                                <span>سواد وعرض الخط (Line Boldness):</span>
+                                <span id="valDarkness" class="text-cyan-400 font-mono">1.4</span>
+                            </div>
+                            <input type="range" id="rangeDarkness" min="0.8" max="2.4" step="0.1" value="1.4" class="w-full accent-cyan-500">
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- Custom Templates & Scene Customizer (المطلب الثاني: حل ورق التلوين وإمكانية إضافة تصاميم أفضل وقوالب خارجية) -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl backdrop-blur-sm space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-emerald-400 text-lg">🖼️</span>
+                        <h2 class="font-bold text-slate-100 text-sm sm:text-base">تخصيص المشاهد وقوالب التلوين الفاخرة</h2>
+                    </div>
+                    <span class="text-[11px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">إضافة وتعديل</span>
+                </div>
+
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    يمكنك اختيار مشهد مسبق فاخر، أو <strong>رفع أي رسمة تلوين خارجية من جهازك (PNG/JPG)</strong> وضبط موضع رأس الطفل فوقها بدقة!
+                </p>
+
+                <!-- Active Card Selector for Customization -->
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-semibold text-slate-300">اختر الكارت للتعديل عليه:</label>
+                        <select id="selectCardToEdit" class="flex-1 bg-slate-950 border border-emerald-600/50 rounded-xl px-2.5 py-1.5 text-xs text-slate-100 font-bold focus:outline-none">
+                            <!-- Populated dynamically based on layout -->
+                        </select>
+                    </div>
+
+                    <!-- Selected Card Controls Box -->
+                    <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span id="currentCardLabel" class="text-xs font-bold text-emerald-300">الكارت 1: الغلاف الرئيسي</span>
+                            <label class="text-[11px] text-slate-400 flex items-center gap-1 cursor-pointer">
+                                <input type="checkbox" id="chkShowHeadOnCard" checked class="accent-emerald-500 rounded">
+                                <span>إظهار وجه الطفل</span>
+                            </label>
+                        </div>
+
+                        <!-- Template Source (Built-in or Upload Custom) -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] text-slate-400 mb-1">اختر من المعرض الفاخر:</label>
+                                <select id="selectSceneTheme" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200">
+                                    <option value="cover">الغلاف الرئيسي الملكي</option>
+                                    <option value="dedication">صفحة الإهداء والورود</option>
+                                    <option value="superhero">البطل الخارق في المدينة</option>
+                                    <option value="astronaut">رائد الفضاء بين الكواكب</option>
+                                    <option value="safari">مستكشف الديناصورات الاستوائي</option>
+                                    <option value="diver">غواص أعماق المحيط والدلفين</option>
+                                    <option value="chef">الشيف الصغير وكعكة الحفل</option>
+                                    <option value="racer">سائق سيارات السباق F1</option>
+                                    <option value="scientist">العالم والمختبر الذكي</option>
+                                    <option value="artist">الفنان ورسام اللوحات</option>
+                                    <option value="knight">فارس القلعة والدرع الأسطوري</option>
+                                    <option value="fairy">غابة الجنيات والفراشات</option>
+                                    <option value="pirate">جزيرة القراصنة وسفينة الكنز</option>
+                                    <option value="dragon">مروض التنانين الطائرة</option>
+                                    <option value="back">الغلاف الخلفي والشهادة</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] text-slate-400 mb-1">أو ارفع قالباً خاصاً بك:</label>
+                                <input type="file" id="inputCustomCardImage" accept="image/*" class="hidden">
+                                <label for="inputCustomCardImage" class="w-full bg-slate-900 hover:bg-slate-850 border border-dashed border-emerald-500/60 rounded-lg px-2 py-1.5 text-xs text-emerald-300 font-bold flex items-center justify-center gap-1.5 cursor-pointer truncate transition">
+                                    <span>📤</span> <span id="customCardImageName">رفع رسمة تلوين</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Head Position & Scale Sliders for This Card -->
+                        <div id="headControlsContainer" class="pt-2 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-[11px]">
+                            <div>
+                                <div class="flex justify-between text-slate-400 mb-0.5">
+                                    <span>حجم الرأس (Scale):</span>
+                                    <span id="valHeadScale" class="text-emerald-400 font-mono">100%</span>
+                                </div>
+                                <input type="range" id="rangeHeadScale" min="50" max="200" value="100" class="w-full accent-emerald-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-slate-400 mb-0.5">
+                                    <span>دوران الرأس (Rot):</span>
+                                    <span id="valHeadRot" class="text-emerald-400 font-mono">0°</span>
+                                </div>
+                                <input type="range" id="rangeHeadRot" min="-45" max="45" value="0" class="w-full accent-emerald-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-slate-400 mb-0.5">
+                                    <span>الموضع الأفقي X:</span>
+                                    <span id="valHeadX" class="text-emerald-400 font-mono">0</span>
+                                </div>
+                                <input type="range" id="rangeHeadX" min="-180" max="180" value="0" class="w-full accent-emerald-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-slate-400 mb-0.5">
+                                    <span>الموضع الرأسي Y:</span>
+                                    <span id="valHeadY" class="text-emerald-400 font-mono">0</span>
+                                </div>
+                                <input type="range" id="rangeHeadY" min="-180" max="180" value="0" class="w-full accent-emerald-500">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Actions -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl backdrop-blur-sm space-y-3">
+                <button id="btnExportPDF" class="glow-btn w-full bg-gradient-to-r from-fuchsia-600 via-pink-600 to-amber-500 hover:from-fuchsia-500 hover:to-amber-400 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center gap-3 text-base shadow-lg transition cursor-pointer">
+                    <svg class="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>تحميل الكتيب جاهز للطباعة (A4 PDF)</span>
+                </button>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="btnExportPNG" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition">
+                        <span>🖼️ تصدير صورة (300 DPI)</span>
+                    </button>
+                    <button id="btnPrintDirect" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition">
+                        <span>🖨️ طباعة فورية</span>
+                    </button>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Right Live Preview Panel (7.5 cols) -->
+        <section class="lg:col-span-7 flex flex-col gap-4">
+
+            <!-- Preview Header Bar -->
+            <div class="bg-slate-900/95 border border-slate-800 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 shadow-md">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="font-bold text-sm text-slate-100">معاينة ورقة الطباعة A4 المجمعة الحية</span>
+                    <span id="badgeCardCount" class="text-xs bg-fuchsia-950 border border-fuchsia-700 text-fuchsia-300 px-2 py-0.5 rounded-md font-mono">12 كارت</span>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs">
+                    <button id="btnZoomFit" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700 transition">
+                        ملاءمة الشاشة
+                    </button>
+                    <button id="btnZoom100" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700 transition">
+                        تكبير
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canvas Viewport Frame -->
+            <div id="previewViewport" class="canvas-container flex-1 min-h-[580px] p-4 sm:p-6 rounded-3xl border border-slate-800 flex items-center justify-center overflow-auto shadow-2xl relative">
+                
+                <div class="relative bg-white rounded shadow-2xl transition-all duration-300 max-w-full">
+                    <canvas id="mainA4Canvas" width="3508" height="2480" class="w-full h-auto rounded block border border-slate-400"></canvas>
+                    
+                    <!-- Loading Overlay during heavy PDF compile -->
+                    <div id="loadingOverlay" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-sm rounded flex flex-col items-center justify-center gap-3 text-white z-20">
+                        <div class="w-12 h-12 border-4 border-fuchsia-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span class="font-bold text-base text-fuchsia-300">جارٍ تجميع وتصدير ملف PDF عالي الجودة (300 DPI)...</span>
+                        <span class="text-xs text-slate-400">تجهيز صفحات وكروت التلوين بدقة ممتازة</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Tips -->
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-3 text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-amber-400">💡</span>
+                    <span>عند تغيير عدد الكروت من القائمة، تتغير المقاسات تلقائياً وتتوزع خطوط القص المنقطة (✂) بشكل ملائم تماماً.</span>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Cropper Modal -->
+    <div id="cropperModal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-cyan-400 text-lg">✂️</span>
+                    <h3 class="font-bold text-slate-100 text-sm sm:text-base">تحديد وقص وجه الطفل (Face Cropper)</h3>
+                </div>
+                <button id="btnCloseModal" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-sm transition">✕</button>
+            </div>
+
+            <div class="p-4 bg-slate-950 flex-1 overflow-hidden flex items-center justify-center min-h-[350px]">
+                <div class="w-full h-full max-h-[50vh] flex items-center justify-center">
+                    <img id="cropperImage" src="" alt="قص الصورة" class="max-w-full max-h-full block">
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-800 bg-slate-900 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <button id="btnRotateLeft" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs border border-slate-700">↺ 90°</button>
+                    <button id="btnRotateRight" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs border border-slate-700">↻ 90°</button>
+                    <button id="btnCropCircleToggle" class="bg-cyan-950 border border-cyan-700 text-cyan-300 px-3 py-2 rounded-xl text-xs font-semibold">🔘 قص بيضاوي / دائري</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btnCancelCrop" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-xs">إلغاء</button>
+                    <button id="btnApplyCrop" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 text-white font-bold px-5 py-2 rounded-xl text-xs shadow-md">تأكيد القص واستخراج الخطوط</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION CORE -->
+    <script>
+    /**
+     * Enhanced Kids Coloring Booklet & Poster Generator
+     * Supports Dynamic Card Counts (1, 2, 4, 6, 8, 12, 16 Cards)
+     * High-Detail Vector Scenes + Custom Template Image Upload
+     */
+
+    const SHEET_WIDTH = 3508;   // A4 Landscape 300 DPI
+    const SHEET_HEIGHT = 2480;  // A4 Landscape 300 DPI
+
+    // Layout Presets Definition
+    const LAYOUT_PRESETS = {
+        '1':  { rows: 1, cols: 1, name: 'صفحة كاملة (1 كارت A4 ضخم - بوستر تلوين جداري)', desc: 'كارت واحد ضخم يشغل كامل ورقة الـ A4 (29.7 × 21 سم)' },
+        '2':  { rows: 1, cols: 2, name: 'كارتين كبيرين A5 (صفحة مقسومة نصفين)', desc: 'كارتين مقاس A5 عريض (14.8 × 21 سم تقريباً لكل كارت)' },
+        '4':  { rows: 2, cols: 2, name: '4 كروت كبيرة واضحة (2 صفوف × 2 أعمدة)', desc: '4 كروت كبيرة وواضحة جداً وسهلة التلوين والقص (14.8 × 10.5 سم)' },
+        '6':  { rows: 2, cols: 3, name: '6 كروت متوسطة (2 صفوف × 3 أعمدة)', desc: '6 كروت بتوزيع متوازن (9.9 × 10.5 سم تقريباً)' },
+        '8':  { rows: 2, cols: 4, name: '8 كروت (2 صفوف × 4 أعمدة)', desc: '8 كروت متوسطة الحجم (7.4 × 10.5 سم تقريباً)' },
+        '12': { rows: 3, cols: 4, name: '12 كارت ميني بوكليت (3 صفوف × 4 أعمدة)', desc: '12 كارت ميني بوكليت (7.4 × 7.0 سم تقريباً مع خطوط قص منقطة)' },
+        '16': { rows: 4, cols: 4, name: '16 كارت فلاش كاردز (4 صفوف × 4 أعمدة)', desc: '16 بطاقة تلوين مصغرة فلاش كاردز (7.4 × 5.2 سم)' }
+    };
+
+    // State
+    let state = {
+        layoutKey: '12',
+        childName: 'آدم',
+        from: 'ماما وبابا بكل حب',
+        to: 'بطلنا الرائع آدم',
+        rawFaceImage: null,
+        croppedFaceCanvas: null,
+        lineArtFaceCanvas: null,
+        cropper: null,
+        isCircularCrop: true,
+        filterStyle: 'cartoon',
+        filterSettings: {
+            threshold: 24,
+            darkness: 1.4
+        },
+        selectedCardIndex: 0,
+        // Individual Card Configurations (Up to 16 cards)
+        cards: []
+    };
+
+    // Catalog of Rich Scenes
+    const SCENE_CATALOG = {
+        'cover': { title: 'الغلاف الملكي', caption: '', defaultHead: { x: 0.65, y: 0.46, scale: 1.0, rot: 3, show: true } },
+        'dedication': { title: 'صفحة الإهداء والورود', caption: '', defaultHead: { x: 0.5, y: 0.72, scale: 0.75, rot: 0, show: false } },
+        'superhero': { title: 'البطل الخارق في المدينة', caption: 'البطل الخارق ينطلق لحماية المدينة!', defaultHead: { x: 0.50, y: 0.35, scale: 1.0, rot: -4, show: true } },
+        'astronaut': { title: 'رائد الفضاء بين الكواكب', caption: 'مستكشف الفضاء العجيب بين الكواكب!', defaultHead: { x: 0.50, y: 0.36, scale: 1.0, rot: 0, show: true } },
+        'safari': { title: 'مستكشف الديناصورات الاستوائي', caption: 'صديق الديناصورات اللطيفة في الغابة!', defaultHead: { x: 0.43, y: 0.39, scale: 0.95, rot: 4, show: true } },
+        'diver': { title: 'غواص أعماق المحيط والدلفين', caption: 'غواص شجاع يبحث عن كنز البحار!', defaultHead: { x: 0.50, y: 0.38, scale: 0.98, rot: -4, show: true } },
+        'chef': { title: 'الشيف الصغير وكعكة الحفل', caption: 'الشيف الصغير يصنع أشهى كعكة سحرية!', defaultHead: { x: 0.50, y: 0.41, scale: 0.98, rot: 0, show: true } },
+        'racer': { title: 'سائق سيارات السباق F1', caption: 'سائق السيارات السريع في المركز الأول!', defaultHead: { x: 0.49, y: 0.35, scale: 0.96, rot: 2, show: true } },
+        'scientist': { title: 'العالم والمختبر الذكي', caption: 'العالم العبقري يبتكر اختراعاً مدهشاً!', defaultHead: { x: 0.50, y: 0.36, scale: 0.98, rot: -2, show: true } },
+        'artist': { title: 'الفنان ورسام اللوحات', caption: 'الفنان الصغير يرسم ويلون أجمل لوحة!', defaultHead: { x: 0.48, y: 0.38, scale: 0.95, rot: 3, show: true } },
+        'knight': { title: 'فارس القلعة والدرع الأسطوري', caption: 'فارس الشجاعة يحمي قلعة الأصدقاء!', defaultHead: { x: 0.49, y: 0.38, scale: 0.98, rot: -3, show: true } },
+        'fairy': { title: 'غابة الجنيات والفراشات', caption: 'أمير الأحلام في الغابة السحرية اللطيفة!', defaultHead: { x: 0.48, y: 0.37, scale: 0.95, rot: 2, show: true } },
+        'pirate': { title: 'جزيرة القراصنة وسفينة الكنز', caption: 'قبطان المغامرات يبحث عن جزيرة الكنز!', defaultHead: { x: 0.50, y: 0.37, scale: 0.98, rot: -3, show: true } },
+        'dragon': { title: 'مروض التنانين الطائرة', caption: 'مغامر شجاع يطير مع التنين الودود!', defaultHead: { x: 0.46, y: 0.36, scale: 0.95, rot: 4, show: true } },
+        'back': { title: 'الغلاف الخلفي والشهادة', caption: '', defaultHead: { x: 0.5, y: 0.5, scale: 0.8, rot: 0, show: false } }
+    };
+
+    // Default Order of Themes for up to 16 cards
+    const DEFAULT_THEMES_ORDER = [
+        'cover', 'dedication', 'superhero', 'astronaut',
+        'safari', 'diver', 'chef', 'racer',
+        'scientist', 'artist', 'knight', 'back',
+        'fairy', 'pirate', 'dragon', 'cover'
+    ];
+
+    // DOM Elements
+    const selectLayout = document.getElementById('selectLayout');
+    const layoutDetailsText = document.getElementById('layoutDetailsText');
+    const badgeCardCount = document.getElementById('badgeCardCount');
+    const inputChildName = document.getElementById('inputChildName');
+    const inputFrom = document.getElementById('inputFrom');
+    const inputTo = document.getElementById('inputTo');
+    const inputFile = document.getElementById('inputFile');
+    const mainA4Canvas = document.getElementById('mainA4Canvas');
+    const facePreviewCanvas = document.getElementById('facePreviewCanvas');
+    const selectFilterStyle = document.getElementById('selectFilterStyle');
+    const rangeThreshold = document.getElementById('rangeThreshold');
+    const rangeDarkness = document.getElementById('rangeDarkness');
+    const valThreshold = document.getElementById('valThreshold');
+    const valDarkness = document.getElementById('valDarkness');
+
+    // Card Customizer Elements
+    const selectCardToEdit = document.getElementById('selectCardToEdit');
+    const currentCardLabel = document.getElementById('currentCardLabel');
+    const chkShowHeadOnCard = document.getElementById('chkShowHeadOnCard');
+    const selectSceneTheme = document.getElementById('selectSceneTheme');
+    const inputCustomCardImage = document.getElementById('inputCustomCardImage');
+    const customCardImageName = document.getElementById('customCardImageName');
+    const rangeHeadScale = document.getElementById('rangeHeadScale');
+    const rangeHeadRot = document.getElementById('rangeHeadRot');
+    const rangeHeadX = document.getElementById('rangeHeadX');
+    const rangeHeadY = document.getElementById('rangeHeadY');
+    const valHeadScale = document.getElementById('valHeadScale');
+    const valHeadRot = document.getElementById('valHeadRot');
+    const valHeadX = document.getElementById('valHeadX');
+    const valHeadY = document.getElementById('valHeadY');
+
+    // Buttons
+    const btnQuickExport = document.getElementById('btnQuickExport');
+    const btnExportPDF = document.getElementById('btnExportPDF');
+    const btnExportPNG = document.getElementById('btnExportPNG');
+    const btnPrintDirect = document.getElementById('btnPrintDirect');
+    const btnOpenCropper = document.getElementById('btnOpenCropper');
+    const btnSamplePhoto = document.getElementById('btnSamplePhoto');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+
+    // Cropper Modal Elements
+    const cropperModal = document.getElementById('cropperModal');
+    const cropperImage = document.getElementById('cropperImage');
+    const btnCloseModal = document.getElementById('btnCloseModal');
+    const btnCancelCrop = document.getElementById('btnCancelCrop');
+    const btnApplyCrop = document.getElementById('btnApplyCrop');
+    const btnRotateLeft = document.getElementById('btnRotateLeft');
+    const btnRotateRight = document.getElementById('btnRotateRight');
+    const btnCropCircleToggle = document.getElementById('btnCropCircleToggle');
+
+    // Zoom Buttons
+    const btnZoomFit = document.getElementById('btnZoomFit');
+    const btnZoom100 = document.getElementById('btnZoom100');
+
+    // ==========================================
+    // 1. INITIALIZE CARDS STATE & LAYOUT
+    // ==========================================
+
+    function initCardsState() {
+        state.cards = [];
+        for (let i = 0; i < 16; i++) {
+            const themeKey = DEFAULT_THEMES_ORDER[i] || 'superhero';
+            const sceneDef = SCENE_CATALOG[themeKey];
+            state.cards.push({
+                index: i,
+                theme: themeKey,
+                title: sceneDef.title,
+                caption: sceneDef.caption,
+                showHead: sceneDef.defaultHead.show,
+                customImage: null, // User-uploaded custom coloring template
+                headOffsetX: 0,
+                headOffsetY: 0,
+                headScale: sceneDef.defaultHead.scale,
+                headRot: sceneDef.defaultHead.rot
+            });
+        }
+    }
+
+    function updateCardSelectorDropdown() {
+        const layout = LAYOUT_PRESETS[state.layoutKey];
+        const totalCards = layout.rows * layout.cols;
+
+        selectCardToEdit.innerHTML = '';
+        for (let i = 0; i < totalCards; i++) {
+            const card = state.cards[i];
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = `الكارت ${i + 1}: ${card.customImage ? '★ (قالب مخصص) ' : ''}${card.title}`;
+            selectCardToEdit.appendChild(opt);
+        }
+
+        if (state.selectedCardIndex >= totalCards) {
+            state.selectedCardIndex = 0;
+        }
+        selectCardToEdit.value = state.selectedCardIndex;
+        syncCardEditorUI();
+    }
+
+    function syncCardEditorUI() {
+        const card = state.cards[state.selectedCardIndex];
+        if (!card) return;
+
+        currentCardLabel.innerText = `الكارت ${card.index + 1}: ${card.title}`;
+        chkShowHeadOnCard.checked = card.showHead;
+        selectSceneTheme.value = card.theme;
+        
+        customCardImageName.innerText = card.customImage ? 'تم رفع قالب خاص ✓' : 'رفع رسمة تلوين';
+
+        // Head Controls
+        const scalePct = Math.round(card.headScale * 100);
+        rangeHeadScale.value = scalePct;
+        valHeadScale.innerText = `${scalePct}%`;
+
+        rangeHeadRot.value = card.headRot;
+        valHeadRot.innerText = `${card.headRot}°`;
+
+        rangeHeadX.value = card.headOffsetX;
+        valHeadX.innerText = card.headOffsetX;
+
+        rangeHeadY.value = card.headOffsetY;
+        valHeadY.innerText = card.headOffsetY;
+    }
+
+    // ==========================================
+    // 2. ADVANCED COLORING LINE ART ENGINE (Extended DoG)
+    // ==========================================
+
+    function processColoringLineArt(sourceCanvas, style = 'cartoon', settings = {}) {
+        const w = sourceCanvas.width;
+        const h = sourceCanvas.height;
+
+        const offscreen = document.createElement('canvas');
+        offscreen.width = w;
+        offscreen.height = h;
+        const ctx = offscreen.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(sourceCanvas, 0, 0, w, h);
+
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+
+        // Grayscale
+        const gray = new Float32Array(w * h);
+        for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+            gray[j] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        }
+
+        // Extended Difference of Gaussians (XDoG) / Dual Blur
+        const blur1 = fastBoxBlur(gray, w, h, 1);
+        const blur2 = fastBoxBlur(gray, w, h, style === 'sketch' ? 4 : 2);
+
+        const outImgData = ctx.createImageData(w, h);
+        const out = outImgData.data;
+
+        const threshold = settings.threshold || 24;
+        const boldness = settings.darkness || 1.4;
+
+        for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+                const idx = y * w + x;
+                const p = idx * 4;
+
+                // Sobel edge
+                const gx = 
+                    -1 * gray[(y - 1) * w + (x - 1)] + 1 * gray[(y - 1) * w + (x + 1)] +
+                    -2 * gray[y * w + (x - 1)]       + 2 * gray[y * w + (x + 1)] +
+                    -1 * gray[(y + 1) * w + (x - 1)] + 1 * gray[(y + 1) * w + (x + 1)];
+
+                const gy = 
+                    -1 * gray[(y - 1) * w + (x - 1)] - 2 * gray[(y - 1) * w + x] - 1 * gray[(y - 1) * w + (x + 1)] +
+                     1 * gray[(y + 1) * w + (x - 1)] + 2 * gray[(y + 1) * w + x] + 1 * gray[(y + 1) * w + (x + 1)];
+
+                const mag = Math.hypot(gx, gy);
+
+                // Difference of blur (Pencil sketch contour)
+                const dog = blur1[idx] - 0.97 * blur2[idx];
+
+                let pixel = 255;
+
+                if (style === 'manga') {
+                    // Crisp Manga inking
+                    if (mag > threshold * 0.85 || dog < -1.5) {
+                        pixel = 0;
+                    }
+                } else if (style === 'sketch') {
+                    // Soft artistic pencil sketch
+                    if (mag > threshold) {
+                        pixel = Math.max(0, 255 - (mag - threshold) * boldness * 2);
+                    } else if (dog < -0.8) {
+                        pixel = Math.max(40, 255 + dog * 25 * boldness);
+                    }
+                } else {
+                    // Default Pure Cartoon Outlines (Kid friendly)
+                    if (mag > threshold) {
+                        const factor = Math.min(1, (mag - threshold) / 35);
+                        pixel = Math.max(0, 255 - factor * 255 * boldness);
+                    } else if (dog < -2.2) {
+                        pixel = Math.max(0, 255 + dog * 20);
+                    }
+                }
+
+                // Threshold background to pure white
+                if (pixel > 190) pixel = 255;
+                else pixel = Math.min(pixel, 40); // Deep rich black lines
+
+                out[p] = pixel;
+                out[p + 1] = pixel;
+                out[p + 2] = pixel;
+                out[p + 3] = 255;
+            }
+        }
+
+        ctx.putImageData(outImgData, 0, 0);
+
+        // Circular / Oval Vignette with outer cartoon line
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = w;
+        finalCanvas.height = h;
+        const fCtx = finalCanvas.getContext('2d');
+
+        fCtx.fillStyle = '#FFFFFF';
+        fCtx.fillRect(0, 0, w, h);
+
+        fCtx.save();
+        fCtx.beginPath();
+        fCtx.ellipse(w / 2, h / 2, w * 0.45, h * 0.47, 0, 0, Math.PI * 2);
+        fCtx.clip();
+        fCtx.drawImage(offscreen, 0, 0);
+        fCtx.restore();
+
+        // Border contour
+        fCtx.strokeStyle = '#000000';
+        fCtx.lineWidth = 4;
+        fCtx.beginPath();
+        fCtx.ellipse(w / 2, h / 2, w * 0.45, h * 0.47, 0, 0, Math.PI * 2);
+        fCtx.stroke();
+
+        return finalCanvas;
+    }
+
+    function fastBoxBlur(src, w, h, radius) {
+        const dst = new Float32Array(w * h);
+        const temp = new Float32Array(w * h);
+
+        for (let y = 0; y < h; y++) {
+            const row = y * w;
+            for (let x = 0; x < w; x++) {
+                let sum = 0, count = 0;
+                for (let k = -radius; k <= radius; k++) {
+                    const nx = x + k;
+                    if (nx >= 0 && nx < w) {
+                        sum += src[row + nx];
+                        count++;
+                    }
+                }
+                temp[row + x] = sum / count;
+            }
+        }
+
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                let sum = 0, count = 0;
+                for (let k = -radius; k <= radius; k++) {
+                    const ny = y + k;
+                    if (ny >= 0 && ny < h) {
+                        sum += temp[ny * w + x];
+                        count++;
+                    }
+                }
+                dst[y * w + x] = sum / count;
+            }
+        }
+        return dst;
+    }
+
+    // ==========================================
+    // 3. SAMPLE FACE BUILDER
+    // ==========================================
+
+    function createDefaultSampleFace() {
+        const c = document.createElement('canvas');
+        c.width = 400;
+        c.height = 400;
+        const ctx = c.getContext('2d');
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 400, 400);
+
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Head
+        ctx.beginPath();
+        ctx.ellipse(200, 210, 110, 125, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Hair
+        ctx.beginPath();
+        ctx.moveTo(90, 190);
+        ctx.bezierCurveTo(90, 90, 170, 75, 200, 80);
+        ctx.bezierCurveTo(240, 75, 310, 90, 310, 190);
+        ctx.bezierCurveTo(270, 140, 240, 150, 200, 140);
+        ctx.bezierCurveTo(160, 150, 130, 140, 90, 190);
+        ctx.stroke();
+
+        // Eyes
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.arc(160, 210, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(240, 210, 16, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Glints
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(155, 205, 5, 0, Math.PI * 2);
+        ctx.arc(235, 205, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Smile
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(200, 255, 30, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+
+        return c;
+    }
+
+    // ==========================================
+    // 4. RICH VECTOR SCENES RENDERING ENGINE
+    // ==========================================
+
+    function renderSingleCard(ctx, card, cw, ch, state) {
+        // Safe inner padding
+        const pad = Math.max(16, Math.min(cw, ch) * 0.035);
+
+        // 1. If User Uploaded a Custom Template, render it!
+        if (card.customImage) {
+            renderCustomUserTemplate(ctx, card, cw, ch, pad);
+            return;
+        }
+
+        // 2. Otherwise render Built-in High-Detail Scene
+        switch (card.theme) {
+            case 'cover':
+                renderRichCover(ctx, card, cw, ch, pad, state);
+                break;
+            case 'dedication':
+                renderRichDedication(ctx, card, cw, ch, pad, state);
+                break;
+            case 'superhero':
+                renderRichSuperhero(ctx, card, cw, ch, pad, state);
+                break;
+            case 'astronaut':
+                renderRichAstronaut(ctx, card, cw, ch, pad, state);
+                break;
+            case 'safari':
+                renderRichSafari(ctx, card, cw, ch, pad, state);
+                break;
+            case 'diver':
+                renderRichDiver(ctx, card, cw, ch, pad, state);
+                break;
+            case 'chef':
+                renderRichChef(ctx, card, cw, ch, pad, state);
+                break;
+            case 'racer':
+                renderRichRacer(ctx, card, cw, ch, pad, state);
+                break;
+            case 'scientist':
+                renderRichScientist(ctx, card, cw, ch, pad, state);
+                break;
+            case 'artist':
+                renderRichArtist(ctx, card, cw, ch, pad, state);
+                break;
+            case 'knight':
+                renderRichKnight(ctx, card, cw, ch, pad, state);
+                break;
+            case 'fairy':
+                renderRichFairy(ctx, card, cw, ch, pad, state);
+                break;
+            case 'pirate':
+                renderRichPirate(ctx, card, cw, ch, pad, state);
+                break;
+            case 'dragon':
+                renderRichDragon(ctx, card, cw, ch, pad, state);
+                break;
+            case 'back':
+            default:
+                renderRichBack(ctx, card, cw, ch, pad, state);
+                break;
+        }
+    }
+
+    /**
+     * User-Uploaded Custom Template Drawing
+     */
+    function renderCustomUserTemplate(ctx, card, cw, ch, pad) {
+        drawCardBorder(ctx, cw, ch, pad);
+
+        // Draw image fitted to card
+        const img = card.customImage;
+        const scale = Math.min((cw - pad * 2) / img.width, (ch - pad * 2 - 60) / img.height);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
+        const dx = (cw - dw) / 2;
+        const dy = pad + 10;
+
+        ctx.drawImage(img, dx, dy, dw, dh);
+
+        // Place Child Head if enabled
+        if (card.showHead && state.lineArtFaceCanvas) {
+            const hx = cw * 0.5 + card.headOffsetX;
+            const hy = ch * 0.4 + card.headOffsetY;
+            const hw = Math.min(cw, ch) * 0.32 * card.headScale;
+            drawHeadOnCanvas(ctx, hx, hy, hw, hw * 1.1, card.headRot, state.lineArtFaceCanvas);
+        }
+
+        if (card.caption) {
+            drawCardCaption(ctx, cw, ch, card.caption, pad);
+        }
+    }
+
+    // --- Rich Built-in Scenes ---
+
+    function renderRichCover(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad, true);
+
+        const cx = cw / 2;
+        const scale = Math.min(cw / 877, ch / 826.66);
+
+        // Top Ribbon
+        drawRibbonBanner(ctx, cx, pad + 55 * scale, '★ كتيب التلوين والمغامرات ★', 28 * scale, scale);
+
+        // Main Title (Hollow Outline Coloring Text)
+        ctx.save();
+        ctx.direction = 'rtl';
+        ctx.textAlign = 'center';
+        ctx.font = `900 ${58 * scale}px "Tajawal", "Cairo", sans-serif`;
+        drawOutlineColoringText(ctx, `مغامرات ${state.childName}`, cx, pad + 155 * scale, '#000000', '#ffffff', 8 * scale);
+
+        ctx.font = `700 ${22 * scale}px "Tajawal", sans-serif`;
+        ctx.fillStyle = '#334155';
+        ctx.fillText('رحلة الأبطال الصغار في عالم الخيال والألوان', cx, pad + 210 * scale);
+        ctx.restore();
+
+        // Decorative Wreath & Child Head
+        const hx = cx + card.headOffsetX * scale;
+        const hy = pad + 370 * scale + card.headOffsetY * scale;
+        const hw = 230 * scale * card.headScale;
+        const hh = 250 * scale * card.headScale;
+
+        // Radial Laurel Leaves around Head
+        drawColoringLaurelWreath(ctx, hx, hy, hw * 0.68, scale);
+
+        if (card.showHead && state.lineArtFaceCanvas) {
+            drawHeadOnCanvas(ctx, hx, hy, hw, hh, card.headRot, state.lineArtFaceCanvas);
+            drawRoyalCrown(ctx, hx, hy - hh * 0.48, 65 * scale);
+        }
+
+        // Balloons & Party Doodles
+        drawColoringBalloon(ctx, pad + 80 * scale, pad + 340 * scale, 45 * scale, -15);
+        drawColoringBalloon(ctx, cw - pad - 80 * scale, pad + 320 * scale, 42 * scale, 15);
+        drawDoodleStar(ctx, pad + 120 * scale, ch - pad - 90 * scale, 30 * scale);
+        drawDoodleStar(ctx, cw - pad - 120 * scale, ch - pad - 90 * scale, 30 * scale);
+
+        // Bottom Ribbon
+        ctx.save();
+        ctx.direction = 'rtl';
+        ctx.textAlign = 'center';
+        ctx.font = `800 ${22 * scale}px "Tajawal", sans-serif`;
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText('إصدار خاص وبطولة حصرية للبطل الصغير', cx, ch - pad - 40 * scale);
+        ctx.restore();
+    }
+
+    function renderRichDedication(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad, false);
+        const scale = Math.min(cw / 877, ch / 826.66);
+        const cx = cw / 2;
+
+        drawRibbonBanner(ctx, cx, pad + 55 * scale, 'صفحة الإهداء والمحبة', 28 * scale, scale);
+
+        // Ornamental Scroll Box
+        ctx.save();
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.lineWidth = 4 * scale;
+        roundRect(ctx, pad + 40 * scale, pad + 110 * scale, cw - (pad + 40 * scale) * 2, ch - (pad + 110 * scale) * 2 - 40 * scale, 24 * scale);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.setLineDash([8 * scale, 8 * scale]);
+        ctx.lineWidth = 2 * scale;
+        ctx.strokeStyle = '#64748b';
+        roundRect(ctx, pad + 55 * scale, pad + 125 * scale, cw - (pad + 55 * scale) * 2, ch - (pad + 125 * scale) * 2 - 70 * scale, 18 * scale);
+        ctx.stroke();
+        ctx.restore();
+
+        // Text
+        ctx.save();
+        ctx.direction = 'rtl';
+        ctx.textAlign = 'center';
+
+        ctx.font = `800 ${26 * scale}px "Tajawal", sans-serif`;
+        ctx.fillStyle = '#e11d48';
+        ctx.fillText('إلى بطلنا المتميز:', cx, pad + 190 * scale);
+
+        ctx.font = `900 ${40 * scale}px "Tajawal", "Cairo", sans-serif`;
+        drawOutlineColoringText(ctx, state.to || state.childName, cx, pad + 250 * scale, '#000000', '#ffffff', 6 * scale);
+
+        ctx.font = `600 ${22 * scale}px "Tajawal", sans-serif`;
+        ctx.fillStyle = '#1e293b';
+        ctx.fillText('لون صفحاتك واصنع بطولاتك الخاصة في كل مشهد..', cx, pad + 325 * scale);
+        ctx.fillText('نحن فخورون بك دائماً وبإبداعك الرائع!', cx, pad + 365 * scale);
+
+        ctx.font = `800 ${24 * scale}px "Tajawal", sans-serif`;
+        ctx.fillStyle = '#2563eb';
+        ctx.fillText('مع كامل الحب من:', cx, pad + 440 * scale);
+
+        ctx.font = `800 ${36 * scale}px "Tajawal", sans-serif`;
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText(state.from || 'ماما وبابا', cx, pad + 490 * scale);
+        ctx.restore();
+
+        drawCuteGiftBox(ctx, cx, ch - pad - 120 * scale, scale);
+    }
+
+    function renderRichSuperhero(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad);
+        const scale = Math.min(cw / 877, ch / 826.66);
+        drawCardCaption(ctx, cw, ch, card.caption, pad);
+
+        // Skyscrapers in perspective
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3 * scale;
+        ctx.strokeRect(pad + 60 * scale, ch - pad - 360 * scale, 120 * scale, 300 * scale);
+        drawWindowGrid(ctx, pad + 75 * scale, ch - pad - 340 * scale, 90 * scale, 240 * scale, 5, 3, scale);
+
+        ctx.strokeRect(pad + 200 * scale, ch - pad - 440 * scale, 150 * scale, 380 * scale);
+        drawWindowGrid(ctx, pad + 220 * scale, ch - pad - 420 * scale, 110 * scale, 310 * scale, 6, 3, scale);
+
+        ctx.strokeRect(cw - pad - 220 * scale, ch - pad - 400 * scale, 140 * scale, 340 * scale);
+        drawWindowGrid(ctx, cw - pad - 200 * scale, ch - pad - 380 * scale, 100 * scale, 280 * scale, 5, 3, scale);
+
+        drawDoodleCloud(ctx, pad + 150 * scale, pad + 160 * scale, 70 * scale);
+        drawDoodleCloud(ctx, cw - pad - 180 * scale, pad + 150 * scale, 80 * scale);
+
+        const hx = cw * 0.50 + card.headOffsetX * scale;
+        const hy = ch * 0.35 + card.headOffsetY * scale;
+        const hw = 175 * scale * card.headScale;
+        const hh = 195 * scale * card.headScale;
+
+        // Cape
+        ctx.lineWidth = 4 * scale;
+        ctx.beginPath();
+        ctx.moveTo(hx - 40 * scale, hy + 60 * scale);
+        ctx.bezierCurveTo(hx - 180 * scale, hy + 120 * scale, hx - 190 * scale, hy + 320 * scale, hx - 80 * scale, hy + 260 * scale);
+        ctx.bezierCurveTo(hx - 20 * scale, hy + 220 * scale, hx - 10 * scale, hy + 120 * scale, hx - 10 * scale, hy + 70 * scale);
+        ctx.stroke();
+
+        // Torso
+        ctx.beginPath();
+        ctx.moveTo(hx - 50 * scale, hy + 70 * scale);
+        ctx.lineTo(hx - 35 * scale, hy + 240 * scale);
+        ctx.lineTo(hx + 35 * scale, hy + 240 * scale);
+        ctx.lineTo(hx + 50 * scale, hy + 70 * scale);
+        ctx.closePath();
+        ctx.stroke();
+
+        drawDiamondEmblem(ctx, hx, hy + 140 * scale, 40 * scale);
+
+        // Raised Arm
+        ctx.beginPath();
+        ctx.moveTo(hx + 45 * scale, hy + 90 * scale);
+        ctx.lineTo(hx + 130 * scale, hy + 30 * scale);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(hx + 145 * scale, hy + 20 * scale, 18 * scale, 0, Math.PI * 2);
+        ctx.stroke();
+
+        if (card.showHead && state.lineArtFaceCanvas) {
+            drawHeadOnCanvas(ctx, hx, hy, hw, hh, card.headRot, state.lineArtFaceCanvas);
+            drawHeroMask(ctx, hx, hy - 10 * scale, hw * 0.7, scale);
+        }
+    }
+
+    function renderRichAstronaut(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad);
+        const scale = Math.min(cw / 877, ch / 826.66);
+        drawCardCaption(ctx, cw, ch, card.caption, pad);
+
+        drawDoodleSaturn(ctx, pad + 140 * scale, pad + 180 * scale, 55 * scale, scale);
+        drawDoodleMoon(ctx, cw - pad - 140 * scale, pad + 160 * scale, 42 * scale);
+        drawCuteRocket(ctx, cw - pad - 150 * scale, ch - pad - 320 * scale, 70 * scale, scale);
+        drawDoodleStar(ctx, cw * 0.28, pad + 100 * scale, 22 * scale);
+        drawDoodleStar(ctx, cw * 0.75, pad + 250 * scale, 25 * scale);
+
+        const hx = cw * 0.50 + card.headOffsetX * scale;
+        const hy = ch * 0.36 + card.headOffsetY * scale;
+        const hw = 175 * scale * card.headScale;
+        const hh = 185 * scale * card.headScale;
+
+        // Spacesuit Body
+        ctx.lineWidth = 4 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, hx - 90 * scale, hy + 70 * scale, 180 * scale, 200 * scale, 30 * scale);
+        ctx.fill();
+        ctx.stroke();
+
+        roundRect(ctx, hx - 45 * scale, hy + 110 * scale, 90 * scale, 70 * scale, 12 * scale);
+        ctx.stroke();
+
+        if (card.showHead && state.lineArtFaceCanvas) {
+            drawHeadOnCanvas(ctx, hx, hy, hw, hh, card.headRot, state.lineArtFaceCanvas);
+
+            // Helmet Bubble
+            ctx.lineWidth = 6 * scale;
+            ctx.strokeStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(hx, hy, hw * 0.65, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Glare
+            ctx.lineWidth = 3 * scale;
+            ctx.beginPath();
+            ctx.arc(hx, hy, hw * 0.58, Math.PI * 1.1, Math.PI * 1.4);
+            ctx.stroke();
+        }
+    }
+
+    function renderRichSafari(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad);
+        const scale = Math.min(cw / 877, ch / 826.66);
+        drawCardCaption(ctx, cw, ch, card.caption, pad);
+
+        drawCuteDinosaur(ctx, cw - pad - 170 * scale, ch - pad - 240 * scale, scale);
+        drawJungleLeaves(ctx, pad + 70 * scale, pad + 100 * scale, scale);
+        drawJungleLeaves(ctx, cw - pad - 90 * scale, pad + 90 * scale, scale);
+
+        const hx = cw * 0.43 + card.headOffsetX * scale;
+        const hy = ch * 0.39 + card.headOffsetY * scale;
+        const hw = 165 * scale * card.headScale;
+        const hh = 180 * scale * card.headScale;
+
+        // Safari Shirt
+        ctx.lineWidth = 4 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, hx - 65 * scale, hy + 70 * scale, 130 * scale, 200 * scale, 18 * scale);
+        ctx.fill();
+        ctx.stroke();
+
+        if (card.showHead && state.lineArtFaceCanvas) {
+            drawHeadOnCanvas(ctx, hx, hy, hw, hh, card.headRot, state.lineArtFaceCanvas);
+
+            // Safari Hat
+            ctx.save();
+            ctx.translate(hx, hy - hh * 0.42);
+            ctx.lineWidth = 4 * scale;
+            ctx.strokeStyle = '#000000';
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(0, 0, 75 * scale, Math.PI, 0);
+            ctx.fill();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.ellipse(0, 5 * scale, 110 * scale, 22 * scale, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+
+    function renderRichDiver(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad);
+        const scale = Math.min(cw / 877, ch / 826.66);
+        drawCardCaption(ctx, cw, ch, card.caption, pad);
+
+        drawCuteDolphin(ctx, pad + 160 * scale, pad + 200 * scale, scale);
+        drawSeaweed(ctx, pad + 70 * scale, ch - pad - 100 * scale, scale);
+        drawSeaweed(ctx, cw - pad - 70 * scale, ch - pad - 100 * scale, scale);
+        drawBubbles(ctx, cw * 0.65, ch * 0.35, 4, scale);
+
+        const hx = cw * 0.50 + card.headOffsetX * scale;
+        const hy = ch * 0.38 + card.headOffsetY * scale;
+        const hw = 170 * scale * card.headScale;
+        const hh = 185 * scale * card.headScale;
+
+        // Wetsuit
+        ctx.lineWidth = 4 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, hx - 65 * scale, hy + 70 * scale, 130 * scale, 200 * scale, 20 * scale);
+        ctx.fill();
+        ctx.stroke();
+
+        if (card.showHead && state.lineArtFaceCanvas) {
+            drawHeadOnCanvas(ctx, hx, hy, hw, hh, card.headRot, state.lineArtFaceCanvas);
+            roundRect(ctx, hx - 70 * scale, hy - 30 * scale, 140 * scale, 55 * scale, 18 * scale);
+            ctx.stroke();
+        }
+    }
+
+    function renderRichChef(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad);
+        const scale = Math.min(cw / 877, ch / 826.66);
+        drawCardCaption(ctx, cw, ch, card.caption, pad);
+
+        drawCelebrationCake(ctx, cw - pad - 180 * scale, ch - pad - 260 * scale, scale);
+
+        const hx = cw * 0.50 + card.headOffsetX * scale;
+        const hy = ch * 0.41 + card.headOffsetY * scale;
+        const hw = 170 * scale * card.headScale;
+        const hh = 185 * scale * card.headScale;
+
+        // Apron
+        ctx.lineWidth = 4 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, hx - 65 * scale, hy + 70 * scale, 130 * scale, 200 * scale, 16 * scale);
+        ctx.fill();
+        ctx.stroke();
+
+        if (card.showHead && state.lineArtFaceCanvas) {
+            drawHeadOnCanvas(ctx, hx, hy, hw, hh, card.headRot, state.lineArtFaceCanvas);
+
+            // Chef Hat (Toque)
+            ctx.save();
+            ctx.translate(hx, hy - hh * 0.44);
+            ctx.lineWidth = 4 * scale;
+            ctx.strokeStyle = '#000000';
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, -75 * scale, -5 * scale, 150 * scale, 25 * scale, 6 * scale);
+            ctx.fill();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(-65 * scale, -5 * scale);
+            ctx.bezierCurveTo(-90 * scale, -70 * scale, -40 * scale, -110 * scale, -20 * scale, -75 * scale);
+            ctx.bezierCurveTo(0, -125 * scale, 40 * scale, -115 * scale, 30 * scale, -75 * scale);
+            ctx.bezierCurveTo(60 * scale, -100 * scale, 90 * scale, -60 * scale, 65 * scale, -5 * scale);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+
+    function renderRichRacer(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad);
+        const scale = Math.min(cw / 877, ch / 826.66);
+        drawCardCaption(ctx, cw, ch, card.caption, pad);
+
+        drawCheckeredFlag(ctx, pad + 130 * scale, pad + 160 * scale, -20, scale);
+        drawCheckeredFlag(ctx, cw - pad - 130 * scale, pad + 160 * scale, 20, scale);
+
+        const hx = cw * 0.49 + card.headOffsetX * scale;
+        const hy = ch * 0.35 + card.headOffsetY * scale;
+        const hw = 165 * scale * card.headScale;
+        const hh = 180 * scale * card.headScale;
+
+        // Race Car Body
+        ctx.lineWidth = 4 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(pad + 100 * scale, ch - pad - 220 * scale);
+        ctx.quadraticCurveTo(cw / 2, ch - pad - 360 * scale, cw - pad - 100 * scale, ch - pad - 220 * scale);
+        ctx.lineTo(cw - pad - 80 * scale, ch - pad - 140 * scale);
+        ctx.lineTo(pad + 80 * scale, ch - pad - 140 * scale);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        if (card.showHead && state.lineArtFaceCanvas) {
+            drawHeadOnCanvas(ctx, hx, hy, hw, hh, card.headRot, state.lineArtFaceCanvas);
+        }
+    }
+
+    function renderRichScientist(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad);
+        const scale = Math.min(cw / 877, ch / 826.66);
+        drawCardCaption(ctx, cw, ch, card.caption, pad);
+
+        drawChalkboardDoodles(ctx, pad + 140 * scale, pad + 190 * scale, scale);
+        drawMicroscope(ctx, cw - pad - 180 * scale, ch - pad - 280 * scale, scale);
+
+        const hx = cw * 0.50 + card.headOffsetX * scale;
+        const hy = ch * 0.36 + card.headOffsetY * scale;
+        const hw = 170 * scale * card.headScale;
+        const hh = 185 * scale * card.headScale;
+
+        ctx.lineWidth = 4 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, hx - 65 * scale, hy + 70 * scale, 130 * scale, 200 * scale, 16 * scale);
+        ctx.fill();
+        ctx.stroke();
+
+        if (card.showHead && state.lineArtFaceCanvas) {
+            drawHeadOnCanvas(ctx, hx, hy, hw, hh, card.headRot, state.lineArtFaceCanvas);
+        }
+    }
+
+    function renderRichArtist(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad);
+        const scale = Math.min(cw / 877, ch / 826.66);
+        drawCardCaption(ctx, cw, ch, card.caption, pad);
+
+        drawArtistEasel(ctx, cw - pad - 200 * scale, ch - pad - 360 * scale, scale);
+        drawArtistPalette(ctx, pad + 140 * scale, ch - pad - 280 * scale, scale);
+
+        const hx = cw * 0.48 + card.headOffsetX * scale;
+        const hy = ch * 0.38 + card.headOffsetY * scale;
+        const hw = 165 * scale * card.headScale;
+        const hh = 180 * scale * card.headScale;
+
+        ctx.lineWidth = 4 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, hx - 65 * scale, hy + 70 * scale, 130 * scale, 200 * scale, 20 * scale);
+        ctx.fill();
+        ctx.stroke();
+
+        if (card.showHead && state.lineArtFaceCanvas) {
+            drawHeadOnCanvas(ctx, hx, hy, hw, hh, card.headRot, state.lineArtFaceCanvas);
+        }
+    }
+
+    function renderRichKnight(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad);
+        const scale = Math.min(cw / 877, ch / 826.66);
+        drawCardCaption(ctx, cw, ch, card.caption, pad);
+
+        drawCastleBackground(ctx, cw - pad - 180 * scale, pad + 240 * scale, scale);
+        drawKnightShield(ctx, pad + 130 * scale, ch - pad - 280 * scale, scale);
+
+        const hx = cw * 0.49 + card.headOffsetX * scale;
+        const hy = ch * 0.38 + card.headOffsetY * scale;
+        const hw = 170 * scale * card.headScale;
+        const hh = 185 * scale * card.headScale;
+
+        ctx.lineWidth = 4 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, hx - 65 * scale, hy + 70 * scale, 130 * scale, 200 * scale, 20 * scale);
+        ctx.fill();
+        ctx.stroke();
+
+        if (card.showHead && state.lineArtFaceCanvas) {
+            drawHeadOnCanvas(ctx, hx, hy, hw, hh, card.headRot, state.lineArtFaceCanvas);
+        }
+    }
+
+    function renderRichFairy(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad);
+        const scale = Math.min(cw / 877, ch / 826.66);
+        drawCardCaption(ctx, cw, ch, card.caption, pad);
+
+        // Giant Mushrooms & Butterflies
+        drawGiantMushroom(ctx, pad + 140 * scale, ch - pad - 200 * scale, scale);
+        drawGiantMushroom(ctx, cw - pad - 150 * scale, ch - pad - 220 * scale, scale * 1.2);
+        drawButterfly(ctx, pad + 160 * scale, pad + 160 * scale, scale);
+        drawButterfly(ctx, cw - pad - 180 * scale, pad + 200 * scale, scale);
+
+        const hx = cw * 0.48 + card.headOffsetX * scale;
+        const hy = ch * 0.37 + card.headOffsetY * scale;
+        const hw = 165 * scale * card.headScale;
+        const hh = 180 * scale * card.headScale;
+
+        // Fairy Wings
+        ctx.lineWidth = 3.5 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(hx - 70 * scale, hy + 40 * scale, 45 * scale, 80 * scale, -0.4, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(hx + 70 * scale, hy + 40 * scale, 45 * scale, 80 * scale, 0.4, 0, Math.PI * 2);
+        ctx.stroke();
+
+        if (card.showHead && state.lineArtFaceCanvas) {
+            drawHeadOnCanvas(ctx, hx, hy, hw, hh, card.headRot, state.lineArtFaceCanvas);
+        }
+    }
+
+    function renderRichPirate(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad);
+        const scale = Math.min(cw / 877, ch / 826.66);
+        drawCardCaption(ctx, cw, ch, card.caption, pad);
+
+        // Pirate Ship in distance & Palm Tree
+        drawPirateShip(ctx, cw - pad - 200 * scale, pad + 240 * scale, scale);
+        drawPalmTree(ctx, pad + 130 * scale, ch - pad - 240 * scale, scale);
+
+        const hx = cw * 0.50 + card.headOffsetX * scale;
+        const hy = ch * 0.37 + card.headOffsetY * scale;
+        const hw = 170 * scale * card.headScale;
+        const hh = 185 * scale * card.headScale;
+
+        ctx.lineWidth = 4 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, hx - 65 * scale, hy + 70 * scale, 130 * scale, 200 * scale, 20 * scale);
+        ctx.fill();
+        ctx.stroke();
+
+        if (card.showHead && state.lineArtFaceCanvas) {
+            drawHeadOnCanvas(ctx, hx, hy, hw, hh, card.headRot, state.lineArtFaceCanvas);
+            // Pirate Captain Tricorn Hat
+            drawPirateHat(ctx, hx, hy - hh * 0.40, scale);
+        }
+    }
+
+    function renderRichDragon(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad);
+        const scale = Math.min(cw / 877, ch / 826.66);
+        drawCardCaption(ctx, cw, ch, card.caption, pad);
+
+        drawDoodleCloud(ctx, pad + 140 * scale, pad + 160 * scale, 75 * scale);
+        drawDoodleCloud(ctx, cw - pad - 160 * scale, pad + 180 * scale, 85 * scale);
+
+        // Cute Friendly Winged Dragon
+        drawFriendlyDragon(ctx, cw * 0.65, ch - pad - 260 * scale, scale);
+
+        const hx = cw * 0.46 + card.headOffsetX * scale;
+        const hy = ch * 0.36 + card.headOffsetY * scale;
+        const hw = 165 * scale * card.headScale;
+        const hh = 180 * scale * card.headScale;
+
+        if (card.showHead && state.lineArtFaceCanvas) {
+            drawHeadOnCanvas(ctx, hx, hy, hw, hh, card.headRot, state.lineArtFaceCanvas);
+        }
+    }
+
+    function renderRichBack(ctx, card, cw, ch, pad, state) {
+        drawCardBorder(ctx, cw, ch, pad, true);
+        const scale = Math.min(cw / 877, ch / 826.66);
+        const cx = cw / 2;
+
+        drawRibbonBanner(ctx, cx, pad + 55 * scale, 'شهادة إتمام التلوين والبطولة', 26 * scale, scale);
+
+        // Certificate Box
+        ctx.save();
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3.5 * scale;
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, pad + 40 * scale, pad + 110 * scale, cw - (pad + 40 * scale) * 2, 260 * scale, 20 * scale);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.textAlign = 'center';
+        ctx.direction = 'rtl';
+        ctx.font = `800 ${24 * scale}px "Tajawal", sans-serif`;
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText('أشهد أنا البطل / البطلة:', cx, pad + 160 * scale);
+
+        ctx.font = `900 ${38 * scale}px "Tajawal", "Cairo", sans-serif`;
+        drawOutlineColoringText(ctx, state.childName, cx, pad + 215 * scale, '#000000', '#ffffff', 5 * scale);
+
+        ctx.font = `700 ${20 * scale}px "Tajawal", sans-serif`;
+        ctx.fillStyle = '#334155';
+        ctx.fillText('بأنني أتممت تلوين كافة صفحات هذا الكتيب ببراعة وإتقان!', cx, pad + 270 * scale);
+
+        for (let i = 0; i < 5; i++) {
+            drawDoodleStar(ctx, cx - 140 * scale + (i * 70 * scale), pad + 325 * scale, 24 * scale);
+        }
+        ctx.restore();
+
+        // Publisher Logo
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.font = `800 ${22 * scale}px "Tajawal", sans-serif`;
+        ctx.fillStyle = '#000000';
+        ctx.fillText('استوديو الأبطال الصغار لكتب الأطفال', cx, pad + 420 * scale);
+        ctx.restore();
+
+        drawQRCodePlaceholder(ctx, cx - 80 * scale, pad + 460 * scale, 160 * scale, scale);
+        drawBarcodeGraphic(ctx, cx, ch - pad - 60 * scale, 320 * scale, 45 * scale, scale);
+    }
+
+    // ==========================================
+    // 5. VECTOR DRAWING UTILITIES & DOODLES
+    // ==========================================
+
+    function drawHeadOnCanvas(ctx, x, y, w, h, rot, faceCanvas) {
+        ctx.save();
+        ctx.translate(x, y);
+        if (rot) ctx.rotate((rot * Math.PI) / 180);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, w / 2, h / 2, 0, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(faceCanvas, -w / 2, -h / 2, w, h);
+        ctx.restore();
+    }
+
+    function drawCardBorder(ctx, cw, ch, pad, isCover = false) {
+        ctx.save();
+        ctx.lineWidth = isCover ? 6 : 4;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, pad, pad, cw - pad * 2, ch - pad * 2, 16);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawCardCaption(ctx, cw, ch, caption, pad) {
+        if (!caption) return;
+        const scale = Math.min(cw / 877, ch / 826.66);
+        ctx.save();
+        ctx.direction = 'rtl';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const bx = cw / 2;
+        const by = ch - pad - 45 * scale;
+        const bw = Math.min(cw - pad * 2 - 20 * scale, 680 * scale);
+        const bh = 50 * scale;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3 * scale;
+        roundRect(ctx, bx - bw / 2, by - bh / 2, bw, bh, 25 * scale);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = `800 ${22 * scale}px "Tajawal", "Cairo", sans-serif`;
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText(caption, bx, by + 2 * scale);
+        ctx.restore();
+    }
+
+    function drawOutlineColoringText(ctx, text, x, y, strokeColor = '#000000', fillColor = '#ffffff', strokeW = 6) {
+        ctx.save();
+        ctx.strokeStyle = strokeColor;
+        ctx.fillStyle = fillColor;
+        ctx.lineWidth = strokeW;
+        ctx.lineJoin = 'round';
+        ctx.strokeText(text, x, y);
+        ctx.fillText(text, x, y);
+        ctx.restore();
+    }
+
+    function drawRibbonBanner(ctx, x, y, text, fontSize = 28, scale = 1) {
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.direction = 'rtl';
+        const rw = 520 * scale;
+        const rh = 62 * scale;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 4 * scale;
+        roundRect(ctx, x - rw / 2, y - rh / 2, rw, rh, 14 * scale);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = `800 ${fontSize}px "Tajawal", sans-serif`;
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText(text, x, y + 2 * scale);
+        ctx.restore();
+    }
+
+    function drawColoringLaurelWreath(ctx, cx, cy, radius, scale) {
+        ctx.save();
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3 * scale;
+        ctx.fillStyle = '#ffffff';
+        for (let a = -1.2; a <= 1.2; a += 0.35) {
+            const lx = cx - Math.cos(a) * radius;
+            const ly = cy + Math.sin(a) * radius;
+            ctx.beginPath();
+            ctx.ellipse(lx, ly, 18 * scale, 9 * scale, a, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            const rx = cx + Math.cos(a) * radius;
+            const ry = cy + Math.sin(a) * radius;
+            ctx.beginPath();
+            ctx.ellipse(rx, ry, 18 * scale, 9 * scale, -a, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    function drawRoyalCrown(ctx, x, y, size) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.7, 0);
+        ctx.lineTo(-size, -size * 0.7);
+        ctx.lineTo(-size * 0.3, -size * 0.35);
+        ctx.lineTo(0, -size * 0.85);
+        ctx.lineTo(size * 0.3, -size * 0.35);
+        ctx.lineTo(size, -size * 0.7);
+        ctx.lineTo(size * 0.7, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawColoringBalloon(ctx, x, y, r, deg) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate((deg * Math.PI) / 180);
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+
+        ctx.beginPath();
+        ctx.ellipse(0, 0, r * 0.85, r, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, r);
+        ctx.lineTo(-5, r + 8);
+        ctx.lineTo(5, r + 8);
+        ctx.closePath();
+        ctx.stroke();
+
+        // String
+        ctx.beginPath();
+        ctx.moveTo(0, r + 8);
+        ctx.bezierCurveTo(-15, r + 40, 15, r + 80, 0, r + 110);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawDoodleStar(ctx, cx, cy, spikes) {
+        ctx.save();
+        let rot = (Math.PI / 2) * 3, x = cx, y = cy, step = Math.PI / 5;
+        const outer = spikes, inner = spikes * 0.45;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - outer);
+        for (let i = 0; i < 5; i++) {
+            x = cx + Math.cos(rot) * outer;
+            y = cy + Math.sin(rot) * outer;
+            ctx.lineTo(x, y);
+            rot += step;
+            x = cx + Math.cos(rot) * inner;
+            y = cy + Math.sin(rot) * inner;
+            ctx.lineTo(x, y);
+            rot += step;
+        }
+        ctx.closePath();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawDoodleCloud(ctx, x, y, size) {
+        ctx.save();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(x, y, size * 0.45, 0, Math.PI * 2);
+        ctx.arc(x + size * 0.5, y - size * 0.1, size * 0.55, 0, Math.PI * 2);
+        ctx.arc(x + size, y, size * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawWindowGrid(ctx, x, y, w, h, rows, cols, scale = 1) {
+        ctx.save();
+        ctx.lineWidth = 2 * scale;
+        ctx.strokeStyle = '#000000';
+        const rw = w / cols, rh = h / rows;
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                ctx.strokeRect(x + c * rw + 4, y + r * rh + 4, rw - 8, rh - 8);
+            }
+        }
+        ctx.restore();
+    }
+
+    function drawDiamondEmblem(ctx, x, y, r) {
+        ctx.save();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(x, y - r);
+        ctx.lineTo(x + r, y);
+        ctx.lineTo(x, y + r);
+        ctx.lineTo(x - r, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        drawDoodleStar(ctx, x, y, r * 0.55);
+        ctx.restore();
+    }
+
+    function drawHeroMask(ctx, x, y, w, scale = 1) {
+        ctx.save();
+        ctx.lineWidth = 4 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.beginPath();
+        ctx.ellipse(x - w * 0.28, y, w * 0.25, 20 * scale, 0, 0, Math.PI * 2);
+        ctx.ellipse(x + w * 0.28, y, w * 0.25, 20 * scale, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawDoodleSaturn(ctx, x, y, r, scale = 1) {
+        ctx.save();
+        ctx.lineWidth = 3 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(x, y, r * 1.7, r * 0.35, -0.3, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawDoodleMoon(ctx, x, y, r) {
+        ctx.save();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0.5 * Math.PI, 1.5 * Math.PI, true);
+        ctx.arc(x + 18, y, r * 0.9, 1.4 * Math.PI, 0.6 * Math.PI, false);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawCuteRocket(ctx, x, y, h, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-0.5);
+        ctx.lineWidth = 3 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(0, -h / 2);
+        ctx.quadraticCurveTo(24 * scale, 0, 20 * scale, h / 2);
+        ctx.lineTo(-20 * scale, h / 2);
+        ctx.quadraticCurveTo(-24 * scale, 0, 0, -h / 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, 12 * scale, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawCuteDinosaur(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(-60, 20, -70, 90);
+        ctx.quadraticCurveTo(-70, 150, 20, 150);
+        ctx.quadraticCurveTo(80, 140, 110, 80);
+        ctx.quadraticCurveTo(60, 90, 40, 40);
+        ctx.quadraticCurveTo(20, -60, -20, -110);
+        ctx.quadraticCurveTo(-60, -120, -40, -80);
+        ctx.quadraticCurveTo(-10, -40, 0, 0);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(-35, -95, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawJungleLeaves(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.lineWidth = 3 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        for (let i = -1; i <= 1; i++) {
+            ctx.beginPath();
+            ctx.ellipse(x + i * 25 * scale, y + Math.abs(i) * 15 * scale, 20 * scale, 45 * scale, i * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    function drawCuteDolphin(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(-70, 0);
+        ctx.quadraticCurveTo(0, -60, 80, 0);
+        ctx.quadraticCurveTo(120, 30, 130, 60);
+        ctx.lineTo(145, 50);
+        ctx.lineTo(135, 75);
+        ctx.quadraticCurveTo(60, 20, -20, 25);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(-45, -5, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawSeaweed(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.lineWidth = 3 * scale;
+        ctx.strokeStyle = '#000000';
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.bezierCurveTo(x - 30 * scale, y - 80 * scale, x + 30 * scale, y - 160 * scale, x, y - 240 * scale);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawBubbles(ctx, x, y, count = 3, scale = 1) {
+        ctx.save();
+        ctx.lineWidth = 2.5 * scale;
+        ctx.strokeStyle = '#000000';
+        for (let i = 0; i < count; i++) {
+            ctx.beginPath();
+            ctx.arc(x + i * 20 * scale, y - i * 35 * scale, (10 + i * 4) * scale, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    function drawCelebrationCake(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, -80, 0, 160, 60, 10);
+        ctx.fill();
+        ctx.stroke();
+        roundRect(ctx, -55, -55, 110, 55, 8);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawCheckeredFlag(ctx, x, y, deg, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.rotate((deg * Math.PI) / 180);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000000';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, 110);
+        ctx.stroke();
+        ctx.strokeRect(0, 0, 80, 55);
+        ctx.restore();
+    }
+
+    function drawChalkboardDoodles(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#000000';
+        ctx.strokeRect(-80, -60, 160, 120);
+        ctx.font = '700 20px "Tajawal", sans-serif';
+        ctx.fillStyle = '#000000';
+        ctx.textAlign = 'center';
+        ctx.fillText('E = mc²', 0, -15);
+        ctx.fillText('H₂O + ✨', 0, 25);
+        ctx.restore();
+    }
+
+    function drawMicroscope(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000000';
+        roundRect(ctx, -40, 50, 80, 20, 5);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(20, 10, 40, Math.PI * 0.4, Math.PI * 1.6);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawArtistEasel(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(-50, 160);
+        ctx.lineTo(0, -70);
+        ctx.lineTo(50, 160);
+        ctx.stroke();
+        roundRect(ctx, -65, -30, 130, 100, 8);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawArtistPalette(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 55, 40, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawCastleBackground(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000000';
+        ctx.strokeRect(-70, 0, 40, 120);
+        ctx.strokeRect(30, 0, 40, 120);
+        ctx.strokeRect(-30, 30, 60, 90);
+        ctx.restore();
+    }
+
+    function drawKnightShield(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(-40, -50);
+        ctx.lineTo(40, -50);
+        ctx.lineTo(40, 10);
+        ctx.quadraticCurveTo(0, 70, 0, 70);
+        ctx.quadraticCurveTo(-40, 10, -40, 10);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawGiantMushroom(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        // Stem
+        roundRect(ctx, -15, 0, 30, 70, 8);
+        ctx.fill();
+        ctx.stroke();
+        // Cap
+        ctx.beginPath();
+        ctx.arc(0, 0, 50, Math.PI, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Dots
+        [-25, 0, 25].forEach(dx => {
+            ctx.beginPath();
+            ctx.arc(dx, -20, 8, 0, Math.PI * 2);
+            ctx.stroke();
+        });
+        ctx.restore();
+    }
+
+    function drawButterfly(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(-15, -10, 18, 12, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(15, -10, 18, 12, 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawPirateShip(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(-60, 20);
+        ctx.lineTo(60, 20);
+        ctx.lineTo(40, 50);
+        ctx.lineTo(-40, 50);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, 20);
+        ctx.lineTo(0, -50);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawPalmTree(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000000';
+        ctx.beginPath();
+        ctx.moveTo(0, 70);
+        ctx.quadraticCurveTo(15, 0, 0, -40);
+        ctx.stroke();
+        drawJungleLeaves(ctx, 0, -40, 0.8);
+        ctx.restore();
+    }
+
+    function drawPirateHat(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(-65, 10);
+        ctx.quadraticCurveTo(0, -40, 65, 10);
+        ctx.quadraticCurveTo(0, 20, -65, 10);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawFriendlyDragon(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(0, 0, 45, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawCuteGiftBox(ctx, x, y, scale = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, -40, -20, 80, 70, 6);
+        ctx.fill();
+        ctx.stroke();
+        roundRect(ctx, -46, -35, 92, 18, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawQRCodePlaceholder(ctx, x, y, size, scale = 1) {
+        ctx.save();
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3 * scale;
+        ctx.fillStyle = '#ffffff';
+        roundRect(ctx, x, y, size, size, 12 * scale);
+        ctx.fill();
+        ctx.stroke();
+        ctx.font = `800 ${13 * scale}px "Tajawal", sans-serif`;
+        ctx.fillStyle = '#000000';
+        ctx.textAlign = 'center';
+        ctx.fillText('امسح الباركود للمزيد', x + size / 2, y + size / 2 + 5 * scale);
+        ctx.restore();
+    }
+
+    function drawBarcodeGraphic(ctx, x, y, w, h, scale = 1) {
+        ctx.save();
+        ctx.translate(x - w / 2, y - h / 2);
+        ctx.fillStyle = '#000000';
+        const bars = [4,2,6,2,3,5,2,4,7,2,3,4,6,2,3,5,2,4,3,6,2,4,5,2,6,3,4,2,5,3,6,2,4];
+        let curX = 15 * scale;
+        bars.forEach(bw => {
+            ctx.fillRect(curX, 0, bw * scale, h - 14 * scale);
+            curX += (bw + 5) * scale;
+        });
+        ctx.font = `600 ${12 * scale}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('9 780201 379624', w / 2, h);
+        ctx.restore();
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+        if (w < 2 * r) r = w / 2;
+        if (h < 2 * r) r = h / 2;
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+    }
+
+    // ==========================================
+    // 6. DYNAMIC SHEET RENDERER (Any Card Count)
+    // ==========================================
+
+    function renderFullA4Sheet() {
+        const ctx = mainA4Canvas.getContext('2d');
+        const layout = LAYOUT_PRESETS[state.layoutKey] || LAYOUT_PRESETS['12'];
+        const rows = layout.rows;
+        const cols = layout.cols;
+        const totalCards = rows * cols;
+
+        const cw = SHEET_WIDTH / cols;
+        const ch = SHEET_HEIGHT / rows;
+
+        // Clear Sheet
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, SHEET_WIDTH, SHEET_HEIGHT);
+
+        // Render Active Cards in Grid
+        for (let i = 0; i < totalCards; i++) {
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            const cellX = col * cw;
+            const cellY = row * ch;
+
+            ctx.save();
+            ctx.translate(cellX, cellY);
+            ctx.beginPath();
+            ctx.rect(0, 0, cw, ch);
+            ctx.clip();
+
+            const card = state.cards[i] || state.cards[0];
+            renderSingleCard(ctx, card, cw, ch, state);
+
+            // Card Badge (only if multiple cards)
+            if (totalCards > 1) {
+                drawCardNumberBadge(ctx, i + 1, Math.min(cw / 877, ch / 826.66));
+            }
+
+            ctx.restore();
+        }
+
+        // Draw Cut Guides if page is divided
+        if (totalCards > 1) {
+            drawCutGuides(ctx, rows, cols, cw, ch);
+        }
+    }
+
+    function drawCardNumberBadge(ctx, num, scale = 1) {
+        ctx.save();
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#ffffff';
+        ctx.lineWidth = 2.5 * scale;
+        const r = 18 * scale;
+        ctx.beginPath();
+        ctx.arc(38 * scale, 38 * scale, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = `800 ${15 * scale}px "Tajawal", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText(num.toString(), 38 * scale, 39 * scale);
+        ctx.restore();
+    }
+
+    function drawCutGuides(ctx, rows, cols, cw, ch) {
+        ctx.save();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([14, 12]);
+
+        for (let c = 1; c < cols; c++) {
+            const x = c * cw;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, SHEET_HEIGHT);
+            ctx.stroke();
+            drawScissorIcon(ctx, x, 30, 0);
+            drawScissorIcon(ctx, x, SHEET_HEIGHT - 30, Math.PI);
+        }
+
+        for (let r = 1; r < rows; r++) {
+            const y = r * ch;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(SHEET_WIDTH, y);
+            ctx.stroke();
+            drawScissorIcon(ctx, 30, y, -Math.PI / 2);
+            drawScissorIcon(ctx, SHEET_WIDTH - 30, y, Math.PI / 2);
+        }
+        ctx.restore();
+    }
+
+    function drawScissorIcon(ctx, x, y, rot) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rot);
+        ctx.font = '22px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#64748b';
+        ctx.fillText('✂', 0, 0);
+        ctx.restore();
+    }
+
+    // ==========================================
+    // 7. CROPPER & FILTER EVENTS
+    // ==========================================
+
+    function openCropperWithImage(imgSrc) {
+        cropperImage.src = imgSrc;
+        cropperModal.classList.remove('hidden');
+
+        if (state.cropper) state.cropper.destroy();
+
+        setTimeout(() => {
+            state.cropper = new Cropper(cropperImage, {
+                aspectRatio: 1,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 0.85,
+                restore: false,
+                guides: true,
+                center: true,
+                ready() {
+                    applyCircularCropMask(state.isCircularCrop);
+                }
+            });
+        }, 100);
+    }
+
+    function applyCircularCropMask(isCircle) {
+        const viewBox = document.querySelector('.cropper-view-box');
+        const face = document.querySelector('.cropper-face');
+        if (viewBox && face) {
+            if (isCircle) {
+                viewBox.classList.add('circle-crop');
+                face.classList.add('circle-crop');
+            } else {
+                viewBox.classList.remove('circle-crop');
+                face.classList.remove('circle-crop');
+            }
+        }
+    }
+
+    function handleApplyCrop() {
+        if (!state.cropper) return;
+        const cropped = state.cropper.getCroppedCanvas({
+            width: 600,
+            height: 600,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high'
+        });
+        state.croppedFaceCanvas = cropped;
+        updateLineArtAndRender();
+        cropperModal.classList.add('hidden');
+    }
+
+    function updateLineArtAndRender() {
+        if (!state.croppedFaceCanvas) return;
+        state.lineArtFaceCanvas = processColoringLineArt(
+            state.croppedFaceCanvas,
+            state.filterStyle,
+            state.filterSettings
+        );
+
+        const pCtx = facePreviewCanvas.getContext('2d');
+        pCtx.clearRect(0, 0, 80, 80);
+        pCtx.drawImage(state.lineArtFaceCanvas, 0, 0, 80, 80);
+
+        renderFullA4Sheet();
+    }
+
+    // ==========================================
+    // 8. PDF & EXPORT ENGINE (300 DPI)
+    // ==========================================
+
+    async function exportToPDF() {
+        loadingOverlay.classList.remove('hidden');
+        setTimeout(() => {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4',
+                    compress: true
+                });
+
+                const imgData = mainA4Canvas.toDataURL('image/jpeg', 0.95);
+                doc.addImage(imgData, 'JPEG', 0, 0, 297, 210, undefined, 'FAST');
+
+                const sanitizedName = (state.childName || 'البطل').replace(/[/\\?%*:|"<>]/g, '-');
+                doc.save(`كتيب-تلوين-${sanitizedName}-${state.layoutKey}كارت-A4.pdf`);
+            } catch (err) {
+                console.error(err);
+                alert('حدث خطأ أثناء إنشاء ملف PDF');
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        }, 120);
+    }
+
+    function exportToPNG() {
+        const link = document.createElement('a');
+        const sanitizedName = (state.childName || 'البطل').replace(/[/\\?%*:|"<>]/g, '-');
+        link.download = `كتيب-تلوين-${sanitizedName}-300DPI.png`;
+        link.href = mainA4Canvas.toDataURL('image/png');
+        link.click();
+    }
+
+    function printDirect() {
+        const dataUrl = mainA4Canvas.toDataURL('image/jpeg', 0.95);
+        const win = window.open('', '_blank');
+        win.document.write(`<!DOCTYPE html><html dir="rtl"><head><title>طباعة كتيب التلوين</title><style>@page{size:A4 landscape;margin:0;}body{margin:0;padding:0;background:#fff;}img{width:100vw;height:100vh;object-fit:contain;}</style></head><body><img src="${dataUrl}" onload="window.print();window.close();"/></body></html>`);
+        win.document.close();
+    }
+
+    // ==========================================
+    // 9. EVENT BINDINGS & BOOTSTRAP
+    // ==========================================
+
+    function initEventListeners() {
+        // Layout change dropdown (المطلب الأول)
+        selectLayout.addEventListener('change', (e) => {
+            state.layoutKey = e.target.value;
+            const layout = LAYOUT_PRESETS[state.layoutKey];
+            layoutDetailsText.innerHTML = `<span>ℹ️</span> <span>${layout.desc}</span>`;
+            badgeCardCount.innerText = layout.rows * layout.cols === 1 ? 'صفحة كاملة' : `${layout.rows * layout.cols} كروت`;
+            updateCardSelectorDropdown();
+            renderFullA4Sheet();
+        });
+
+        // Text Inputs
+        const updateTexts = () => {
+            state.childName = inputChildName.value.trim() || 'البطل';
+            state.from = inputFrom.value.trim();
+            state.to = inputTo.value.trim();
+            renderFullA4Sheet();
+        };
+        inputChildName.addEventListener('input', updateTexts);
+        inputFrom.addEventListener('input', updateTexts);
+        inputTo.addEventListener('input', updateTexts);
+
+        // Filter Style & Sliders
+        selectFilterStyle.addEventListener('change', (e) => {
+            state.filterStyle = e.target.value;
+            updateLineArtAndRender();
+        });
+
+        rangeThreshold.addEventListener('input', (e) => {
+            state.filterSettings.threshold = parseFloat(e.target.value);
+            valThreshold.innerText = e.target.value;
+            updateLineArtAndRender();
+        });
+
+        rangeDarkness.addEventListener('input', (e) => {
+            state.filterSettings.darkness = parseFloat(e.target.value);
+            valDarkness.innerText = e.target.value;
+            updateLineArtAndRender();
+        });
+
+        // Card Selection for Customizer
+        selectCardToEdit.addEventListener('change', (e) => {
+            state.selectedCardIndex = parseInt(e.target.value);
+            syncCardEditorUI();
+        });
+
+        // Scene Theme Selector for current card
+        selectSceneTheme.addEventListener('change', (e) => {
+            const card = state.cards[state.selectedCardIndex];
+            const newTheme = e.target.value;
+            card.theme = newTheme;
+            card.title = SCENE_CATALOG[newTheme].title;
+            card.caption = SCENE_CATALOG[newTheme].caption;
+            card.customImage = null; // Reset custom image if theme selected
+            updateCardSelectorDropdown();
+            renderFullA4Sheet();
+        });
+
+        chkShowHeadOnCard.addEventListener('change', (e) => {
+            const card = state.cards[state.selectedCardIndex];
+            card.showHead = e.target.checked;
+            renderFullA4Sheet();
+        });
+
+        // Custom Template Image Upload for this card (المطلب الثاني)
+        inputCustomCardImage.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const card = state.cards[state.selectedCardIndex];
+                        card.customImage = img;
+                        card.title = `قالب خاص (${file.name.slice(0, 15)})`;
+                        updateCardSelectorDropdown();
+                        renderFullA4Sheet();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Head Position & Scale Sliders for current card
+        rangeHeadScale.addEventListener('input', (e) => {
+            const card = state.cards[state.selectedCardIndex];
+            card.headScale = parseFloat(e.target.value) / 100;
+            valHeadScale.innerText = `${e.target.value}%`;
+            renderFullA4Sheet();
+        });
+
+        rangeHeadRot.addEventListener('input', (e) => {
+            const card = state.cards[state.selectedCardIndex];
+            card.headRot = parseFloat(e.target.value);
+            valHeadRot.innerText = `${e.target.value}°`;
+            renderFullA4Sheet();
+        });
+
+        rangeHeadX.addEventListener('input', (e) => {
+            const card = state.cards[state.selectedCardIndex];
+            card.headOffsetX = parseFloat(e.target.value);
+            valHeadX.innerText = e.target.value;
+            renderFullA4Sheet();
+        });
+
+        rangeHeadY.addEventListener('input', (e) => {
+            const card = state.cards[state.selectedCardIndex];
+            card.headOffsetY = parseFloat(e.target.value);
+            valHeadY.innerText = e.target.value;
+            renderFullA4Sheet();
+        });
+
+        // File Input Upload for Child Face
+        inputFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    state.rawFaceImage = event.target.result;
+                    openCropperWithImage(state.rawFaceImage);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        btnOpenCropper.addEventListener('click', () => {
+            if (state.rawFaceImage) openCropperWithImage(state.rawFaceImage);
+            else if (state.croppedFaceCanvas) openCropperWithImage(state.croppedFaceCanvas.toDataURL());
+        });
+
+        btnCloseModal.addEventListener('click', () => cropperModal.classList.add('hidden'));
+        btnCancelCrop.addEventListener('click', () => cropperModal.classList.add('hidden'));
+        btnApplyCrop.addEventListener('click', handleApplyCrop);
+
+        btnRotateLeft.addEventListener('click', () => state.cropper && state.cropper.rotate(-90));
+        btnRotateRight.addEventListener('click', () => state.cropper && state.cropper.rotate(90));
+        btnCropCircleToggle.addEventListener('click', () => {
+            state.isCircularCrop = !state.isCircularCrop;
+            applyCircularCropMask(state.isCircularCrop);
+            btnCropCircleToggle.innerText = state.isCircularCrop ? '🔘 قص بيضاوي / دائري' : '⬜ قص مستطيل';
+        });
+
+        btnSamplePhoto.addEventListener('click', () => {
+            const sample = createDefaultSampleFace();
+            state.rawFaceImage = sample.toDataURL();
+            openCropperWithImage(state.rawFaceImage);
+        });
+
+        // Export triggers
+        btnQuickExport.addEventListener('click', exportToPDF);
+        btnExportPDF.addEventListener('click', exportToPDF);
+        btnExportPNG.addEventListener('click', exportToPNG);
+        btnPrintDirect.addEventListener('click', printDirect);
+
+        // Zoom Helpers
+        btnZoomFit.addEventListener('click', () => mainA4Canvas.style.maxWidth = '100%');
+        btnZoom100.addEventListener('click', () => mainA4Canvas.style.maxWidth = '150%');
+    }
+
+    function initApp() {
+        initCardsState();
+        initEventListeners();
+        updateCardSelectorDropdown();
+
+        // Default sample child face
+        const sample = createDefaultSampleFace();
+        state.croppedFaceCanvas = sample;
+        state.rawFaceImage = sample.toDataURL();
+
+        updateLineArtAndRender();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        initApp();
+        if (document.fonts) {
+            document.fonts.ready.then(() => renderFullA4Sheet());
+        }
+    });
+    </script>
+</body>
+</html>
